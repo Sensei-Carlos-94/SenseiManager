@@ -1,10 +1,520 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Sensei Manager</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sensei Manager — ERP para PYMEs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0D1117;
+      --ink2: #1C2333;
+      --paper: #F5F2EB;
+      --accent: #2A6B4F;
+      --accent2: #4BAF7D;
+      --accent-light: #D4EDE1;
+      --gold: #C8A84B;
+      --muted: #6B7280;
+      --border: rgba(13,17,23,0.1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+
+    /* GRAIN OVERLAY */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      background: rgba(245,242,235,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--ink);
+      letter-spacing: -0.5px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .logo-dot {
+      width: 8px; height: 8px;
+      background: var(--accent2);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .nav-badge {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(42,107,79,0.2);
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 48px 80px;
+      position: relative;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(48px, 8vw, 96px);
+      line-height: 0.95;
+      letter-spacing: -3px;
+      color: var(--ink);
+      max-width: 900px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.35s forwards;
+    }
+
+    .hero-title em {
+      font-style: normal;
+      color: var(--accent);
+      position: relative;
+    }
+
+    .hero-title em::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 0; right: 0;
+      height: 4px;
+      background: var(--accent2);
+      border-radius: 2px;
+      opacity: 0.5;
+    }
+
+    .hero-sub {
+      margin-top: 28px;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.6;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.5s forwards;
+    }
+
+    .hero-cta {
+      margin-top: 44px;
+      display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.65s forwards;
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 14px 28px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: 0.01em;
+    }
+    .btn-primary:hover { background: var(--ink2); transform: translateY(-1px); }
+
+    .btn-secondary {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s;
+    }
+    .btn-secondary:hover { color: var(--ink); }
+
+    /* SCROLL INDICATOR */
+    .scroll-hint {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      opacity: 0;
+      animation: fadeUp 1s ease 1.2s forwards;
+    }
+    .scroll-hint span { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+    .scroll-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      animation: scrollPulse 2s ease infinite;
+    }
+
+    /* DECORATIVE CIRCLE */
+    .hero-circle {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      border: 1px solid rgba(42,107,79,0.12);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+      animation: fadeIn 1.5s ease 0.8s forwards;
+    }
+    .hero-circle-2 {
+      width: 900px; height: 900px;
+      border-color: rgba(42,107,79,0.06);
+      animation-delay: 1s;
+    }
+
+    /* MODULES SECTION */
+    .section {
+      padding: 100px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      line-height: 1.05;
+      color: var(--ink);
+      max-width: 600px;
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      margin-top: 60px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .module-card {
+      background: var(--paper);
+      padding: 36px 32px;
+      transition: background 0.25s;
+      cursor: default;
+      position: relative;
+    }
+    .module-card:hover { background: #EEE9DF; }
+
+    .module-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .module-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .module-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .module-status {
+      position: absolute;
+      top: 20px; right: 20px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .status-active { background: var(--accent-light); color: var(--accent); }
+    .status-soon { background: #F3F0E8; color: var(--muted); }
+
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* FOOTER CTA */
+    .footer-cta {
+      padding: 100px 48px;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .footer-cta-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+
+    .footer-cta-sub {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 300;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .email-form {
+      display: flex;
+      gap: 10px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .email-input {
+      flex: 1;
+      padding: 13px 18px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .email-input:focus { border-color: var(--accent2); }
+    .email-input::placeholder { color: #9CA3AF; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .footer-copy {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      nav { padding: 16px 24px; }
+      .hero { padding: 100px 24px 60px; }
+      .section { padding: 60px 24px; }
+      .footer-cta { padding: 60px 24px; }
+      footer { padding: 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .email-form { flex-direction: column; }
+      .hero-circle, .hero-circle-2 { display: none; }
+    }
+  </style>
 </head>
-<body style="text-align:center; font-family:Arial;">
-  <h1>Sensei Manager</h1>
-  <p>Sistema ERP en desarrollo 🚧</p>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">
+      <span class="logo-dot"></span>
+      Sensei Manager
+    </div>
+    <span class="nav-badge">Próximamente</span>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-circle"></div>
+    <div class="hero-circle hero-circle-2"></div>
+
+    <p class="hero-eyebrow">ERP para PYMEs latinoamericanas</p>
+    <h1 class="hero-title">Gestiona tu negocio.<br/>Sin <em>complicaciones</em>.</h1>
+    <p class="hero-sub">Un sistema modular, accesible y diseñado para la realidad de las pequeñas y medianas empresas de Latinoamérica.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.querySelector('.footer-cta').scrollIntoView({behavior:'smooth'})">Quiero ser de los primeros</button>
+      <a href="#modulos" class="btn-secondary">Ver módulos →</a>
+    </div>
+
+    <div class="scroll-hint">
+      <span>Explorar</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- MODULES -->
+  <div class="divider"></div>
+  <section class="section" id="modulos">
+    <p class="section-label">Módulos</p>
+    <h2 class="section-title">Todo lo que tu empresa necesita, cuando lo necesita.</h2>
+
+    <div class="modules-grid">
+      <div class="module-card">
+        <span class="module-status status-active">En desarrollo</span>
+        <div class="module-icon" style="background:#D4EDE1">📦</div>
+        <div class="module-name">Inventario</div>
+        <div class="module-desc">Control de stock en tiempo real, entradas y salidas, alertas de mínimos y trazabilidad de productos.</div>
+      </div>
+      <div class="module-card">
+        <span class="module-status status-soon">Próximamente</span>
+        <div class="module-icon" style="background:#FDE8C8">🧾</div>
+        <div class="module-name">Facturación</div>
+        <div class="module-desc">Emite facturas, gestiona clientes y lleva el control de cuentas por cobrar de forma simple.</div>
+      </div>
+      <div class="module-card">
+        <span class="module-status status-soon">Próximamente</span>
+        <div class="module-icon" style="background:#E0E7FF">✅</div>
+        <div class="module-name">Control de Calidad</div>
+        <div class="module-desc">Registra inspecciones, defectos y métricas de calidad directamente en el proceso productivo.</div>
+      </div>
+      <div class="module-card">
+        <span class="module-status status-soon">Próximamente</span>
+        <div class="module-icon" style="background:#FCE7F3">👥</div>
+        <div class="module-name">Recursos Humanos</div>
+        <div class="module-desc">Gestión de personal, asistencia, planillas y documentos en un solo lugar.</div>
+      </div>
+      <div class="module-card">
+        <span class="module-status status-soon">Próximamente</span>
+        <div class="module-icon" style="background:#FEF3C7">📊</div>
+        <div class="module-name">Reportes & Dashboard</div>
+        <div class="module-desc">Visualiza el estado de tu negocio con reportes claros y gráficos en tiempo real.</div>
+      </div>
+      <div class="module-card">
+        <span class="module-status status-soon">Próximamente</span>
+        <div class="module-icon" style="background:#F3E8FF">🏭</div>
+        <div class="module-name">Producción</div>
+        <div class="module-desc">Planifica órdenes de producción, consume materiales y da seguimiento al avance en piso.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FOOTER CTA -->
+  <div class="footer-cta">
+    <h2 class="footer-cta-title">¿Listo para simplificar tu negocio?</h2>
+    <p class="footer-cta-sub">Déjanos tu correo y te avisamos cuando Sensei Manager esté disponible. Sin spam, solo novedades.</p>
+    <div class="email-form">
+      <input class="email-input" type="email" placeholder="tu@correo.com" id="emailInput"/>
+      <button class="btn-primary" onclick="handleSubmit()">Notifícame</button>
+    </div>
+    <p id="thanks" style="display:none;margin-top:16px;font-size:13px;color:var(--accent);font-weight:500;">¡Gracias! Te avisamos pronto. 🎉</p>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Sensei Manager</div>
+    <div class="footer-copy">© 2025 Sensei Manager · Hecho en El Salvador 🇸🇻</div>
+  </footer>
+
+  <script>
+    function handleSubmit() {
+      const input = document.getElementById('emailInput');
+      if (input.value && input.value.includes('@')) {
+        input.style.display = 'none';
+        document.querySelector('.email-form .btn-primary').style.display = 'none';
+        document.getElementById('thanks').style.display = 'block';
+      } else {
+        input.style.borderColor = '#EF4444';
+        setTimeout(() => input.style.borderColor = '', 1500);
+      }
+    }
+
+    // Animate modules on scroll
+    const cards = document.querySelectorAll('.module-card');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '0';
+          entry.target.style.transform = 'translateY(16px)';
+          entry.target.style.transition = `opacity 0.5s ease ${i * 0.07}s, transform 0.5s ease ${i * 0.07}s, background 0.25s`;
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, 50);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    cards.forEach(card => observer.observe(card));
+  </script>
 </body>
 </html>
